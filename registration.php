@@ -1,0 +1,199 @@
+<?php
+
+include 'db.php';
+ 
+
+$lastNameError = $firstNameError = $nicknameError = $emailError = $usernameError = $passwordError = $confirmPasswordError = "";
+$lastName = $firstName = $nickname = $email = $username = $password = $confirmPassword = $userType = "";
+$isValid = true;
+
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Sanitize and validate inputs
+    $lastName = trim($_POST["lastName"]);
+    if (empty($lastName)) {
+        $lastNameError = "Last Name is required.";
+        $isValid = false;
+    }
+
+    $firstName = trim($_POST["firstName"]);
+    if (empty($firstName)) {
+        $firstNameError = "First Name is required.";
+        $isValid = false;
+    }
+
+    $nickname = trim($_POST["nickname"]);
+    if (empty($nickname)) {
+        $nicknameError = "Nickname is required.";
+        $isValid = false;
+    }
+
+    $email = trim($_POST["email"]);
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $emailError = "Invalid email address.";
+        $isValid = false;
+    }
+
+    $username = trim($_POST["username"]);
+    if (empty($username)) {
+        $usernameError = "Username is required.";
+        $isValid = false;
+    }
+
+    $password = $_POST["password"];
+    $passwordPattern = "/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,16}$/";
+    if (!preg_match($passwordPattern, $password)) {
+        $passwordError = "Password must be 8-16 characters long, include at least one uppercase letter, one lowercase letter, one number, and one special character.";
+        $isValid = false;
+    }
+
+    $confirmPassword = $_POST["confirmPassword"];
+    if ($confirmPassword !== $password) {
+        $confirmPasswordError = "Passwords do not match.";
+        $isValid = false;
+    }
+
+    $userType = $_POST['subscriptionType']; // Using subscriptionType as user type
+
+    // If valid, insert data into the database
+    if ($isValid) {
+        // Check if the username or email already exists
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM tbl_user WHERE u_username = ? OR u_email = ?");
+        $stmt->bind_param("ss", $username, $email);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        if ($count > 0) {
+            $usernameError = "Username or email already exists.";
+        } else {
+            // Prepare and bind
+            $stmt = $conn->prepare("INSERT INTO tbl_user (u_lname, u_fname, u_nickname, u_email, u_username, u_password, u_confirm, u_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT); // Hash the password for security
+
+            $stmt->bind_param("ssssssss", $lastName, $firstName, $nickname, $email, $username, $hashedPassword, $confirmPassword, $userType);
+
+            // Execute the statement
+            if ($stmt->execute()) {
+                // Redirect to login.php after successful registration
+                header("Location: login.php");
+                exit(); // Stop further script execution
+            } else {
+                // Output the error message
+                echo "Error: " . $stmt->error;
+            }
+            $stmt->close();
+        }
+    }
+}
+
+// Close the database connection
+$conn->close();
+?>
+
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>User Registration Form</title>
+        <link rel="stylesheet" href="register.css"> <!-- Link to the CSS file -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> <!-- Font Awesome -->
+    </head>
+    <body>
+    <form method="post" action="">
+        <h2>Registration Form</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="lastName">Last Name:</label>
+                <div class="input-container">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="lastName" name="lastName" value="<?php echo htmlspecialchars($lastName); ?>" placeholder="Enter LastName">
+                </div>
+                <span class="error"><?php echo $lastNameError; ?></span>
+            </div>
+
+            <div class="form-group">
+                <label for="firstName">First Name:</label>
+                <div class="input-container">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="firstName" name="firstName" value="<?php echo htmlspecialchars($firstName); ?>" placeholder="Enter FirstName">
+                </div>
+                <span class="error"><?php echo $firstNameError; ?></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="nickname">Nickname:</label>
+                <div class="input-container">
+                    <i class="fas fa-user-tag"></i>
+                    <input type="text" id="nickname" name="nickname" value="<?php echo htmlspecialchars($nickname); ?>" placeholder="Enter Nickname">
+                </div>
+                <span class="error"><?php echo $nicknameError; ?></span>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <div class="input-container">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($email); ?>" placeholder="Enter Email Address">
+                </div>
+                <span class="error"><?php echo $emailError; ?></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <div class="input-container">
+                    <i class="fas fa-user-circle"></i>
+                    <input type="text" id="username" name="username" value="<?php echo htmlspecialchars($username); ?>" placeholder="Username">
+                </div>
+                <span class="error"><?php echo $usernameError; ?></span>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <div class="input-container">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password" name="password" placeholder="Password">
+                </div>
+                <span class="error"><?php echo $passwordError; ?></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password:</label>
+                <div class="input-container">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter your password">
+                </div>
+                <span class="error"><?php echo $confirmPasswordError; ?></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+    <label for="subscriptionType">Status Type:</label>
+    <div class="input-container">
+        <select id="subscriptionType" name="subscriptionType" required>
+            <option value="" disabled selected>Select Type</option>
+            <option value="Standard">Standard</option>
+            <option value="Premium">Premium</option>
+        </select>
+        <i class="fas fa-caret-down"></i> <!-- Dropdown icon -->
+    </div>
+</div>
+
+
+
+        <div class="form-group">
+            <button type="submit">Register</button>
+        </div>
+    </form>
+    </body>
+    </html>
+

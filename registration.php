@@ -1,12 +1,17 @@
 <?php
+// Include PHPMailer classes
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
-include 'db.php';
- 
+include 'db.php'; // Your DB connection
+require 'PHPMailer-master/src/Exception.php'; // Correct the path if necessary
+require 'PHPMailer-master/src/PHPMailer.php'; 
+require 'PHPMailer-master/src/SMTP.php';  // If not using Composer
 
+// Initialize variables
 $lastNameError = $firstNameError = $nicknameError = $emailError = $usernameError = $passwordError = $confirmPasswordError = "";
 $lastName = $firstName = $nickname = $email = $username = $password = $confirmPassword = $userType = "";
 $isValid = true;
-
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Sanitize and validate inputs
@@ -57,17 +62,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // If valid, insert data into the database
     if ($isValid) {
-        // Check if the username or email already exists
-        $stmt = $conn->prepare("SELECT COUNT(*) FROM tbl_user WHERE u_username = ? OR u_email = ?");
-        $stmt->bind_param("ss", $username, $email);
-        $stmt->execute();
-        $stmt->bind_result($count);
-        $stmt->fetch();
-        $stmt->close();
-
-        if ($count > 0) {
-            $usernameError = "Username or email already exists.";
-        } else {
+      
             // Prepare and bind
             $stmt = $conn->prepare("INSERT INTO tbl_user (u_lname, u_fname, u_nickname, u_email, u_username, u_password, u_confirm, u_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT); // Hash the password for security
@@ -76,6 +71,48 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             // Execute the statement
             if ($stmt->execute()) {
+                // Send the confirmation email using PHPMailer
+                $mail = new PHPMailer(true); // Create a new PHPMailer instance
+
+                try {
+                    // SMTP configuration
+                    $mail->isSMTP();
+                    $mail->Host = 'smtp.gmail.com'; // Set the 
+                    $mail->SMTPAuth = true;
+                    $mail->Username = 'jonwilyammayormita@gmail.com'; // Your SMTP username
+                    $mail->Password = 'mqkcqkytlwurwlks
+'; // Your SMTP password
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                    $mail->Port = 465; // Common SMTP port for TLS
+
+                    // Sender and recipient details
+                    $mail->setFrom('jonwilyammayormita@gmail.com', 'Your Website');
+                    $mail->addAddress($email, "$firstName $lastName");
+
+                    // Email subject and body content
+                    $mail->isHTML(true);
+                    $mail->Subject = 'Welcome to Our Platform!';
+                    $mail->Body = "
+                    <html>
+                    <head>
+                        <title>Verify Your Email</title>
+                    </head>
+                    <body>
+                        <p>Dear $firstName $lastName,</p>
+                        <p>Thank you for registering. Please verify your email by clicking the link below:</p>
+                        <p><a href='http://yourwebsite.com/email.php?code=$verificationCode'>Verify Email</a></p>
+                        <p>Once verified, you can log in.</p>
+                        <p>Best regards,<br>Your Platform Team</p>
+                    </body>
+                    </html>
+                ";
+                    // Send the email
+                    $mail->send();
+                    echo 'Confirmation email has been sent. Please check your inbox.';
+                } catch (Exception $e) {
+                    echo "Error sending confirmation email: {$mail->ErrorInfo}";
+                }
+
                 // Redirect to login.php after successful registration
                 header("Location: login.php");
                 exit(); // Stop further script execution
@@ -86,11 +123,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt->close();
         }
     }
-}
+
 
 // Close the database connection
 $conn->close();
 ?>
+
 
 
     <!DOCTYPE html>

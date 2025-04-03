@@ -82,8 +82,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $mail->Username = 'jonwilyammayormita@gmail.com'; // Your SMTP username
                     $mail->Password = 'mqkcqkytlwurwlks
 '; // Your SMTP password
-                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                    $mail->Port = 465; // Common SMTP port for TLS
+$mail->Port = 587;  // Change from 465 to 587 for STARTTLS
+$mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // This should match the port
 
                     // Sender and recipient details
                     $mail->setFrom('jonwilyammayormita@gmail.com', 'Your Website');
@@ -100,7 +100,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <body>
                         <p>Dear $firstName $lastName,</p>
                         <p>Thank you for registering. Please verify your email by clicking the link below:</p>
-                        <p><a href='http://yourwebsite.com/email.php?code=$verificationCode'>Verify Email</a></p>
+                      <p><a href='http://localhost/split-wise/login.php?code=$verificationCode'>Login Page</a></p>
+
                         <p>Once verified, you can log in.</p>
                         <p>Best regards,<br>Your Platform Team</p>
                     </body>

@@ -3,12 +3,12 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-include 'db.php'; 
-require 'PHPMailer-master/src/Exception.php'; 
-require 'PHPMailer-master/src/PHPMailer.php'; 
-require 'PHPMailer-master/src/SMTP.php'; 
+include '../views/db.php'; 
+require 'C:/xampp/htdocs/Split-Wise/myProject/PHPMailer-master/src/Exception.php'; 
+require 'C:/xampp/htdocs/Split-Wise/myProject/PHPMailer-master/src/PHPMailer.php'; 
+require 'C:/xampp/htdocs/Split-Wise/myProject/PHPMailer-master/src/SMTP.php'; 
 
-// Initialize variables
+// Initialize variablesd
 $lastNameError = $firstNameError = $nicknameError = $emailError = $usernameError = $passwordError = $confirmPasswordError = "";
 $lastName = $firstName = $nickname = $email = $username = $password = $confirmPassword = $userType = "";
 $isValid = true;
@@ -137,7 +137,7 @@ $conn->close();
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>User Registration Form</title>
-        <link rel="stylesheet" href="register.css"> <!-- Link to the CSS file -->
+        <link rel="stylesheet" href="../css/register.css"> <!-- Link to the CSS file -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> <!-- Font Awesome -->
     </head>
     <body>
